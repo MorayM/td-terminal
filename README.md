@@ -22,6 +22,10 @@ Interactive terminal client for Todoist. Pure Python, no external dependencies.
    python main.py
    ```
 
+## Development
+
+Code style: Black (format) and Flake8 (lint), 88-char line length. Install dev deps: `pip install -e ".[dev]"`. Then run `black .` and `flake8 .`.
+
 ## Commands
 
 | Command | Action |
@@ -68,7 +72,3 @@ Buy milk #Shopping @home p1 tomorrow
 - Python 3.14+
 - Unix-like OS (curses required)
 - Todoist account with API token
-
-## License
-
-MIT

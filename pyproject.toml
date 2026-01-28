@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "td-cli"
+version = "0.1.0"
+description = "Interactive terminal client for Todoist"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["flake8", "black"]
+
+[tool.setuptools]
+py-modules = ["config", "main", "models", "task_parser", "todoist_api", "ui"]
+
+[tool.black]
+line-length = 88
+target-version = ["py314"]
+include = '\.pyi?$'
+exclude = '''
+/(
+  \.git
+  | __pycache__
+  | venv
+)/
+'''
