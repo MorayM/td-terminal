@@ -203,7 +203,7 @@ def handle_add_task(
             project_id=parsed['project_id'],
             labels=parsed['labels'],
             priority=parsed['priority'],
-            due_string=parsed['due_string'],
+            due_string=parsed['due_string'] or 'today',
         )
         
         tasks = reload_tasks(api)
