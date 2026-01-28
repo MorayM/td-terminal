@@ -2,6 +2,8 @@
 
 Interactive terminal client for Todoist. Pure Python, no external dependencies.
 
+It's designed for my own Todoist workflow which is focused on entirely on the "Today" view. It's also very much a work in progress...
+
 ## Setup
 
 1. Create virtual environment (Python 3.14+):
@@ -21,10 +23,6 @@ Interactive terminal client for Todoist. Pure Python, no external dependencies.
    ```bash
    python main.py
    ```
-
-## Development
-
-Code style: Black (format) and Flake8 (lint), 88-char line length. Install dev deps: `pip install -e ".[dev]"`. Then run `black .` and `flake8 .`.
 
 ## Commands
 
@@ -72,3 +70,7 @@ Buy milk #Shopping @home p1 tomorrow
 - Python 3.14+
 - Unix-like OS (curses required)
 - Todoist account with API token
+
+## Development
+
+Code style: Black (format) and Flake8 (lint), 88-char line length. Install dev deps: `pip install -e ".[dev]"`. Then run `black .` and `flake8 .`.
