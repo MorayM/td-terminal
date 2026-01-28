@@ -117,6 +117,9 @@ class TodoistUI:
         self._render_input(layout)
         self._render_status(layout)
         
+        # Position cursor at command prompt (after all rendering)
+        self._position_cursor(layout)
+        
         self.stdscr.refresh()
     
     def _render_header(self, layout: dict):
@@ -268,10 +271,27 @@ class TodoistUI:
             
             self.stdscr.addstr(y, buffer_x, display_buffer)
             
-            # Show cursor position
+        except curses.error:
+            pass
+    
+    def _position_cursor(self, layout: dict):
+        """Position cursor at command prompt input area."""
+        y = layout['input_y']
+        
+        if self.input_mode == "add":
+            prompt = "Add task: "
+        elif self.input_mode == "edit":
+            prompt = "Edit task: "
+        else:
+            prompt = "> "
+        
+        buffer_x = len(prompt)
+        max_buffer = layout['max_x'] - buffer_x - 2
+        display_len = min(len(self.input_buffer), max_buffer)
+        
+        try:
             curses.curs_set(1)
-            self.stdscr.move(y, buffer_x + len(display_buffer))
-            
+            self.stdscr.move(y, buffer_x + display_len)
         except curses.error:
             pass
     
