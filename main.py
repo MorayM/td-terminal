@@ -283,34 +283,42 @@ def main_loop(stdscr, api: TodoistAPI, tasks: list[Task], projects):
     ui.update_tasks(tasks)
     ui.update_projects(projects)
     ui.show_status(f"Loaded {len(tasks)} tasks")
+    ui.render()
 
     while True:
-        ui.render()
-
         input_type, value = ui.get_input()
 
         if input_type == "none":
             continue
 
+        if input_type == "refresh":
+            ui.render()
+            continue
+
         if input_type == "cancel":
             ui.end_input_mode()
             ui.clear_status()
+            ui.render()
             continue
 
         if input_type == "scroll_up":
             ui.handle_scroll(-1)
+            ui.render()
             continue
 
         if input_type == "scroll_down":
             ui.handle_scroll(1)
+            ui.render()
             continue
 
         if input_type == "page_up":
             ui.handle_scroll(-10)
+            ui.render()
             continue
 
         if input_type == "page_down":
             ui.handle_scroll(10)
+            ui.render()
             continue
 
         if input_type == "command":
@@ -328,6 +336,7 @@ def main_loop(stdscr, api: TodoistAPI, tasks: list[Task], projects):
 
             if action == "quit":
                 break
+            ui.render()
 
 
 def main():

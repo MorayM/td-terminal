@@ -347,7 +347,8 @@ class TodoistUI:
             - 'scroll_up': User pressed up arrow
             - 'scroll_down': User pressed down arrow
             - 'cancel': User pressed Escape
-            - 'none': No complete input yet
+            - 'refresh': Display changed (e.g. typed char, backspace), redraw needed
+            - 'none': No input (timeout)
         """
         try:
             ch = self.stdscr.getch()
@@ -378,7 +379,7 @@ class TodoistUI:
         if ch == curses.KEY_BACKSPACE or ch == 127 or ch == 8:
             if self.input_buffer:
                 self.input_buffer = self.input_buffer[:-1]
-            return ("none", "")
+            return ("refresh", "")
 
         if ch == curses.KEY_ENTER or ch == 10 or ch == 13:
             command = self.input_buffer
@@ -388,6 +389,7 @@ class TodoistUI:
         # Regular character
         if 32 <= ch <= 126:
             self.input_buffer += chr(ch)
+            return ("refresh", "")
 
         return ("none", "")
 
