@@ -122,7 +122,7 @@ class TodoistUI:
         max_x = layout["max_x"]
         visible_tasks = self._get_visible_tasks()
 
-        title = "Todoist CLI"
+        title = "Todoist Terminal"
         if self.current_filter:
             title += f" - #{self.current_filter}"
         else:
@@ -421,7 +421,7 @@ class TodoistUI:
         # Help content
         help_lines = [
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-            "         Todoist CLI - Help",
+            "      Todoist Terminal - Help",
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
             "",
             "Commands:",

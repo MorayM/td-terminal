@@ -364,12 +364,17 @@ def main():
 
     print(f"Loaded {len(tasks)} tasks. Starting UI...")
 
+    # Set terminal window title
+    print("\033]0;Todoist Terminal\007", end="", flush=True)
+
     # Run the curses UI
     try:
         curses.wrapper(main_loop, api, tasks, projects)
     except KeyboardInterrupt:
         pass
 
+    # Reset terminal title
+    print("\033]0;\007", end="", flush=True)
     print("Goodbye!")
 
 
