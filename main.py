@@ -3,8 +3,6 @@
 
 import curses
 import sys
-from datetime import date
-
 from config import load_config, ConfigError
 from todoist_api import TodoistAPI, APIError
 from models import Task
@@ -13,7 +11,7 @@ from ui import TodoistUI
 
 
 def sort_tasks(tasks: list[Task]) -> list[Task]:
-    """Sort tasks by: overdue first, then due date, then priority.
+    """Sort tasks by: priority first, then due date/time (soonest first).
 
     Args:
         tasks: List of tasks to sort
@@ -21,19 +19,18 @@ def sort_tasks(tasks: list[Task]) -> list[Task]:
     Returns:
         Sorted list of tasks
     """
-    today = date.today().isoformat()
 
     def sort_key(task: Task):
-        # Primary: overdue tasks first
-        is_overdue = task.due_date and task.due_date < today
+        # Primary: priority (API: 4=urgent, 1=normal; negate so urgent first)
+        priority_sort = -task.priority
 
         # Secondary: due date (earlier first, None last)
         due_sort = task.due_date if task.due_date else "9999-99-99"
 
-        # Tertiary: priority (higher number = more urgent, so negate)
-        priority_sort = -task.priority
+        # Tertiary: due time (earlier first, None last)
+        time_sort = task.due_time if task.due_time else "99:99"
 
-        return (not is_overdue, due_sort, priority_sort)
+        return (priority_sort, due_sort, time_sort)
 
     return sorted(tasks, key=sort_key)
 
