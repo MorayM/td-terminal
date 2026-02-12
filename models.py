@@ -36,20 +36,28 @@ class Task:
 
     @classmethod
     def from_api(cls, data: dict, project_name: str = "") -> "Task":
-        """Create Task from API response data."""
+        """Create Task from API v1 response data."""
         due_date = None
         due_time = None
         due_string = None
 
         if data.get("due"):
             due = data["due"]
-            due_date = due.get("date")
             due_string = due.get("string")
-            if due.get("datetime"):
-                # Extract time from ISO datetime
-                dt = due["datetime"]
-                if "T" in dt:
-                    due_time = dt.split("T")[1][:5]  # HH:MM
+            raw_date = due.get("date", "")
+
+            # API v1 folds date+datetime into due.date:
+            #   "YYYY-MM-DD" (full-day)
+            #   "YYYY-MM-DDTHH:MM:SS" (floating)
+            #   "YYYY-MM-DDTHH:MM:SSZ" (UTC)
+            if "T" in raw_date:
+                due_date = raw_date[:10]  # YYYY-MM-DD portion
+                due_time = raw_date[11:16]  # HH:MM portion
+            else:
+                due_date = raw_date
+
+        # API v1: is_completed derived from completed_at
+        is_completed = data.get("completed_at") is not None
 
         return cls(
             id=data["id"],
@@ -60,7 +68,7 @@ class Task:
             due_date=due_date,
             due_time=due_time,
             due_string=due_string,
-            is_completed=data.get("is_completed", False),
+            is_completed=is_completed,
             description=data.get("description", ""),
             project_name=project_name,
         )

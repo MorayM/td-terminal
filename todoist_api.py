@@ -1,4 +1,4 @@
-"""Todoist REST API client using only stdlib."""
+"""Todoist API v1 client using only stdlib."""
 
 import json
 import urllib.request
@@ -18,9 +18,9 @@ class APIError(Exception):
 
 
 class TodoistAPI:
-    """Client for Todoist REST API v2."""
+    """Client for Todoist API v1."""
 
-    BASE_URL = "https://api.todoist.com/rest/v2"
+    BASE_URL = "https://api.todoist.com/api/v1"
 
     def __init__(self, api_key: str):
         self.api_key = api_key
@@ -97,6 +97,31 @@ class TodoistAPI:
         except TimeoutError:
             raise APIError("Request timed out")
 
+    def _get_paginated(self, endpoint: str, params: dict | None = None) -> list[dict]:
+        """Fetch all pages from a paginated endpoint.
+
+        API v1 returns {"results": [...], "next_cursor": "..."}.
+        Iterates until next_cursor is null.
+        """
+        all_results: list[dict] = []
+        page_params = dict(params) if params else {}
+
+        while True:
+            data = self._request("GET", endpoint, params=page_params)
+
+            # Handle both paginated (dict with results) and flat (list) responses
+            if isinstance(data, list):
+                all_results.extend(data)
+                break
+
+            all_results.extend(data.get("results", []))
+            next_cursor = data.get("next_cursor")
+            if not next_cursor:
+                break
+            page_params["cursor"] = next_cursor
+
+        return all_results
+
     def get_projects(self, force_refresh: bool = False) -> list[Project]:
         """Get all projects.
 
@@ -109,7 +134,7 @@ class TodoistAPI:
         if self._projects_cache is not None and not force_refresh:
             return self._projects_cache
 
-        data = self._request("GET", "/projects")
+        data = self._get_paginated("/projects")
         projects = [
             Project(
                 id=p["id"],
@@ -134,7 +159,7 @@ class TodoistAPI:
         if self._labels_cache is not None and not force_refresh:
             return self._labels_cache
 
-        data = self._request("GET", "/labels")
+        data = self._get_paginated("/labels")
         labels = [
             Label(
                 id=lbl["id"],
@@ -163,11 +188,10 @@ class TodoistAPI:
         Returns:
             List of Task objects
         """
-        params = {}
         if filter_str:
-            params["filter"] = filter_str
-
-        data = self._request("GET", "/tasks", params=params)
+            data = self._get_paginated("/tasks/filter", {"query": filter_str})
+        else:
+            data = self._get_paginated("/tasks")
 
         # Pre-fetch projects for name lookups
         projects = self.get_projects()
