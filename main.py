@@ -289,7 +289,7 @@ def main_loop(stdscr, api: TodoistAPI, tasks: list[Task], projects):
             continue
 
         if input_type == "refresh":
-            ui.render()
+            ui.render_input_line()
             continue
 
         if input_type == "cancel":

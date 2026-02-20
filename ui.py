@@ -48,6 +48,8 @@ class TodoistUI:
         self.status_is_error = False
         self.current_filter: str | None = None
         self.input_buffer = ""
+        self.cursor_pos = 0
+        self._input_scroll = 0
         self.input_mode = "command"  # command, add, edit
         self.edit_task_index: int | None = None
 
@@ -115,6 +117,19 @@ class TodoistUI:
         # Position cursor at command prompt (after all rendering)
         self._position_cursor(layout)
 
+        self.stdscr.refresh()
+
+    def render_input_line(self):
+        """Redraw only the input row and cursor."""
+        layout = self._get_layout()
+        y = layout["input_y"]
+        try:
+            self.stdscr.move(y, 0)
+            self.stdscr.clrtoeol()
+        except curses.error:
+            pass
+        self._render_input(layout)
+        self._position_cursor(layout)
         self.stdscr.refresh()
 
     def _render_header(self, layout: dict):
@@ -278,12 +293,18 @@ class TodoistUI:
 
             self.stdscr.addstr(y, 0, prompt)
 
-            # Show input buffer
             buffer_x = len(prompt)
             max_buffer = max_x - buffer_x - 2
-            display_buffer = self.input_buffer
-            if len(display_buffer) > max_buffer:
-                display_buffer = display_buffer[-(max_buffer):]
+
+            if len(self.input_buffer) <= max_buffer:
+                self._input_scroll = 0
+                display_buffer = self.input_buffer
+            else:
+                if self.cursor_pos < self._input_scroll:
+                    self._input_scroll = self.cursor_pos
+                elif self.cursor_pos > self._input_scroll + max_buffer:
+                    self._input_scroll = self.cursor_pos - max_buffer
+                display_buffer = self.input_buffer[self._input_scroll:self._input_scroll + max_buffer]
 
             self.stdscr.addstr(y, buffer_x, display_buffer)
 
@@ -303,11 +324,12 @@ class TodoistUI:
 
         buffer_x = len(prompt)
         max_buffer = layout["max_x"] - buffer_x - 2
-        display_len = min(len(self.input_buffer), max_buffer)
+        scroll = self._input_scroll
+        display_cursor = min(self.cursor_pos - scroll, max_buffer)
 
         try:
             curses.curs_set(1)
-            self.stdscr.move(y, buffer_x + display_len)
+            self.stdscr.move(y, buffer_x + display_cursor)
         except curses.error:
             pass
 
@@ -371,24 +393,47 @@ class TodoistUI:
         if ch == curses.KEY_NPAGE:  # Page Down
             return ("page_down", "")
 
+        if ch == curses.KEY_LEFT:
+            if self.cursor_pos > 0:
+                self.cursor_pos -= 1
+            return ("refresh", "")
+
+        if ch == curses.KEY_RIGHT:
+            if self.cursor_pos < len(self.input_buffer):
+                self.cursor_pos += 1
+            return ("refresh", "")
+
+        if ch == curses.KEY_HOME:
+            self.cursor_pos = 0
+            return ("refresh", "")
+
+        if ch == curses.KEY_END:
+            self.cursor_pos = len(self.input_buffer)
+            return ("refresh", "")
+
         if ch == 27:  # Escape
             self.input_buffer = ""
+            self.cursor_pos = 0
             self.input_mode = "command"
             return ("cancel", "")
 
         if ch == curses.KEY_BACKSPACE or ch == 127 or ch == 8:
-            if self.input_buffer:
-                self.input_buffer = self.input_buffer[:-1]
+            if self.cursor_pos > 0:
+                self.input_buffer = self.input_buffer[:self.cursor_pos - 1] + self.input_buffer[self.cursor_pos:]
+                self.cursor_pos -= 1
             return ("refresh", "")
 
         if ch == curses.KEY_ENTER or ch == 10 or ch == 13:
             command = self.input_buffer
             self.input_buffer = ""
+            self.cursor_pos = 0
             return ("command", command)
 
         # Regular character
         if 32 <= ch <= 126:
-            self.input_buffer += chr(ch)
+            c = chr(ch)
+            self.input_buffer = self.input_buffer[:self.cursor_pos] + c + self.input_buffer[self.cursor_pos:]
+            self.cursor_pos += 1
             return ("refresh", "")
 
         return ("none", "")
@@ -397,6 +442,7 @@ class TodoistUI:
         """Enter add task mode."""
         self.input_mode = "add"
         self.input_buffer = ""
+        self.cursor_pos = 0
         self.clear_status()
 
     def start_edit_mode(self, task_index: int, initial_text: str):
@@ -404,6 +450,7 @@ class TodoistUI:
         self.input_mode = "edit"
         self.edit_task_index = task_index
         self.input_buffer = initial_text
+        self.cursor_pos = len(initial_text)
         self.clear_status()
 
     def end_input_mode(self):
@@ -411,6 +458,7 @@ class TodoistUI:
         self.input_mode = "command"
         self.edit_task_index = None
         self.input_buffer = ""
+        self.cursor_pos = 0
 
     def show_help(self):
         """Display help modal."""
