@@ -487,6 +487,7 @@ class TodoistUI:
             "  Content #Project @label p1 tomorrow",
             "",
             "  #Project   Assign to project",
+            "             Use _ for spaces in names",
             "  @label     Add label (multiple ok)",
             "  p1/p2/p3   Set priority (p1=urgent)",
             "",

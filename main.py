@@ -6,7 +6,7 @@ import sys
 from config import load_config, ConfigError
 from todoist_api import TodoistAPI, APIError
 from models import Task
-from task_parser import parse_command, parse_task_string, task_to_edit_string
+from task_parser import parse_command, parse_task_string, task_to_edit_string, TaskParseError
 from ui import TodoistUI
 
 
@@ -207,7 +207,7 @@ def handle_add_task(
         ui.update_tasks(tasks)
         ui.show_status("Task created!")
 
-    except APIError as e:
+    except (APIError, TaskParseError) as e:
         ui.show_error(str(e))
 
     return ("continue", tasks)
@@ -261,7 +261,7 @@ def handle_edit_task(
         ui.update_tasks(tasks)
         ui.show_status("Task updated!")
 
-    except APIError as e:
+    except (APIError, TaskParseError) as e:
         ui.show_error(str(e))
 
     return ("continue", tasks)

@@ -6,6 +6,11 @@ from typing import Any
 
 from models import Project
 
+
+class TaskParseError(Exception):
+    """User-facing error during task string parsing."""
+
+
 # Priority mapping: user types p1/p2/p3 -> API expects 4/3/2
 USER_TO_API_PRIORITY = {"p1": 4, "p2": 3, "p3": 2}
 
@@ -126,31 +131,71 @@ def parse_command(cmd: str) -> Command:
     return Command("unknown", {"raw": cmd})
 
 
+def _check_underscore_ambiguity(projects: list[Project]) -> None:
+    """Raise TaskParseError if underscore-to-space normalization is ambiguous.
+
+    Ambiguous when:
+    - A project name contains both spaces AND underscores
+    - Two projects differ only by spaces vs underscores
+    """
+    seen_normalized: dict[str, str] = {}
+    for p in projects:
+        if " " in p.name and "_" in p.name:
+            raise TaskParseError(
+                f"Project '{p.name}' has both spaces and underscores"
+            )
+        key = p.name.lower().replace("_", " ")
+        if key in seen_normalized and seen_normalized[key] != p.name.lower():
+            raise TaskParseError(
+                f"Ambiguous projects: '{seen_normalized[key]}' and '{p.name}'"
+            )
+        seen_normalized[key] = p.name.lower()
+
+
 def find_project_by_name(name: str, projects: list[Project]) -> Project | None:
     """Find project by name (case-insensitive partial match).
 
+    Underscores in the input are treated as spaces for matching.
+    Raises TaskParseError if the underscore convention is ambiguous.
+
     Args:
-        name: Project name to search for
+        name: Project name to search for (underscores treated as spaces)
         projects: List of available projects
 
     Returns:
         Matching Project or None
     """
-    name_lower = name.lower()
+    has_underscore = "_" in name
 
-    # Try exact match first
+    if has_underscore:
+        _check_underscore_ambiguity(projects)
+
+    name_lower = name.lower()
+    normalized = name.lower().replace("_", " ") if has_underscore else name_lower
+
+    # Exact match (original)
     for p in projects:
         if p.name.lower() == name_lower:
             return p
 
-    # Try prefix match
+    # Exact match (normalized)
+    if has_underscore:
+        for p in projects:
+            if p.name.lower() == normalized:
+                return p
+
+    # Prefix match
     for p in projects:
-        if p.name.lower().startswith(name_lower):
+        if p.name.lower().startswith(name_lower) or (
+            has_underscore and p.name.lower().startswith(normalized)
+        ):
             return p
 
-    # Try contains match
+    # Contains match
     for p in projects:
-        if name_lower in p.name.lower():
+        if name_lower in p.name.lower() or (
+            has_underscore and normalized in p.name.lower()
+        ):
             return p
 
     return None

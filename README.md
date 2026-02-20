@@ -52,6 +52,12 @@ Buy milk #Shopping @home p1 tomorrow
 - `p1`/`p2`/`p3` - Priority (p1 = urgent)
 - Date keywords: `today`, `tomorrow`, `monday`, etc.
 
+If your project names have spaces in them, replace them with underscores when adding or editing. So to assign a task to the project "My Awesome Project", use
+
+```
+Do something awesome #My_Awesome_Project
+```
+
 ## Navigation
 
 - `↑`/`↓` - Scroll task list
